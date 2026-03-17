@@ -27,3 +27,8 @@ dev-dist
 html
 meta*.json
 .claude
+bun.lock
+yarn.lock
+.code-master/debug-port.txt
+yarn.lock
+yarn.lock

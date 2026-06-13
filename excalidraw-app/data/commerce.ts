@@ -48,6 +48,12 @@ const baseUrl = (): string | null =>
 
 export const isCommerceEnabled = (): boolean => baseUrl() !== null;
 
+/** Absolute URL that begins the OAuth flow for a provider. */
+export const oauthStartUrl = (provider: "google" | "github"): string | null => {
+  const url = baseUrl();
+  return url ? `${url}/api/auth/oauth/${provider}/start` : null;
+};
+
 export const getToken = (): string | null => {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -66,6 +72,28 @@ const setToken = (token: string | null): void => {
   } catch {
     // ignore storage failures (private mode etc.)
   }
+};
+
+/**
+ * After an OAuth redirect the backend hands us the JWT in the URL fragment
+ * (`#token=...`). Capture it, persist it, and clean the URL. Returns true when
+ * a token was captured. Safe to call unconditionally on app startup.
+ */
+export const captureOAuthToken = (): boolean => {
+  if (typeof window === "undefined" || !window.location.hash) {
+    return false;
+  }
+  const hash = window.location.hash.replace(/^#/, "");
+  const params = new URLSearchParams(hash);
+  const token = params.get("token");
+  if (!token) {
+    return false;
+  }
+  setToken(token);
+  // Strip the token from the address bar without reloading.
+  const { pathname, search } = window.location;
+  window.history.replaceState(null, "", `${pathname}${search}`);
+  return true;
 };
 
 class CommerceError extends Error {
@@ -266,6 +294,33 @@ export const updateScene = async (
 
 export const deleteScene = async (id: string): Promise<void> => {
   await request(`/api/scenes/${id}`, { method: "DELETE", auth: true });
+};
+
+// ---- Plans & OAuth discovery ----
+
+export interface PlanInfo {
+  id: PlanId;
+  name: string;
+  priceLabel: string;
+  entitlements: Entitlements;
+}
+
+export const getPlans = async (): Promise<PlanInfo[]> => {
+  const { plans } = await request<{ plans: PlanInfo[] }>("/api/me/plans");
+  return plans;
+};
+
+export const getOAuthProviders = async (): Promise<{
+  google: boolean;
+  github: boolean;
+}> => {
+  try {
+    return await request<{ google: boolean; github: boolean }>(
+      "/api/auth/oauth",
+    );
+  } catch {
+    return { google: false, github: false };
+  }
 };
 
 export { CommerceError, FREE_ENTITLEMENTS };

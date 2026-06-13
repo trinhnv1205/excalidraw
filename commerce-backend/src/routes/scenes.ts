@@ -25,20 +25,24 @@ const sceneUpdateSchema = z
   });
 
 /** List the current user's scenes (metadata only). */
-scenesRouter.get("/", (req, res) => {
+scenesRouter.get("/", async (req, res) => {
   const user = req.user!;
   const entitlements = resolveEntitlements(user.plan, user.subscriptionStatus);
+  const [scenes, used] = await Promise.all([
+    store.listScenes(user.id),
+    store.countScenes(user.id),
+  ]);
   res.json({
-    scenes: store.listScenes(user.id),
+    scenes,
     quota: {
-      used: store.countScenes(user.id),
+      used,
       max: entitlements.maxScenes,
     },
   });
 });
 
 /** Create a new cloud scene, enforcing the plan's scene quota. */
-scenesRouter.post("/", (req, res) => {
+scenesRouter.post("/", async (req, res) => {
   const user = req.user!;
   const parsed = sceneInputSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -47,7 +51,7 @@ scenesRouter.post("/", (req, res) => {
   }
 
   const entitlements = resolveEntitlements(user.plan, user.subscriptionStatus);
-  const used = store.countScenes(user.id);
+  const used = await store.countScenes(user.id);
   // maxScenes === -1 means unlimited.
   if (entitlements.maxScenes !== -1 && used >= entitlements.maxScenes) {
     res.status(402).json({
@@ -58,7 +62,7 @@ scenesRouter.post("/", (req, res) => {
     return;
   }
 
-  const scene = store.createScene({
+  const scene = await store.createScene({
     userId: user.id,
     name: parsed.data.name,
     data: parsed.data.data ?? null,
@@ -67,8 +71,8 @@ scenesRouter.post("/", (req, res) => {
 });
 
 /** Fetch a single scene with its full data payload. */
-scenesRouter.get("/:id", (req, res) => {
-  const scene = store.findScene(req.user!.id, req.params.id);
+scenesRouter.get("/:id", async (req, res) => {
+  const scene = await store.findScene(req.user!.id, req.params.id);
   if (!scene) {
     res.status(404).json({ error: "not_found" });
     return;
@@ -77,7 +81,7 @@ scenesRouter.get("/:id", (req, res) => {
 });
 
 /** Update a scene's name and/or data. */
-scenesRouter.put("/:id", (req, res) => {
+scenesRouter.put("/:id", async (req, res) => {
   const parsed = sceneUpdateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid_input" });
@@ -90,7 +94,7 @@ scenesRouter.put("/:id", (req, res) => {
   if ("data" in parsed.data) {
     patch.data = parsed.data.data;
   }
-  const scene = store.updateScene(req.user!.id, req.params.id, patch);
+  const scene = await store.updateScene(req.user!.id, req.params.id, patch);
   if (!scene) {
     res.status(404).json({ error: "not_found" });
     return;
@@ -99,8 +103,8 @@ scenesRouter.put("/:id", (req, res) => {
 });
 
 /** Delete a scene. */
-scenesRouter.delete("/:id", (req, res) => {
-  const deleted = store.deleteScene(req.user!.id, req.params.id);
+scenesRouter.delete("/:id", async (req, res) => {
+  const deleted = await store.deleteScene(req.user!.id, req.params.id);
   if (!deleted) {
     res.status(404).json({ error: "not_found" });
     return;

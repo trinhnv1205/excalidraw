@@ -23,11 +23,11 @@ const extractToken = (req: Request): string | null => {
 };
 
 /** Require a valid access token; attaches `req.user`. */
-export const requireAuth = (
+export const requireAuth = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): void => {
+): Promise<void> => {
   const token = extractToken(req);
   if (!token) {
     res.status(401).json({ error: "missing_token" });
@@ -35,7 +35,7 @@ export const requireAuth = (
   }
   try {
     const payload = verifyAccessToken(token);
-    const user = store.findUserById(payload.sub);
+    const user = await store.findUserById(payload.sub);
     if (!user) {
       res.status(401).json({ error: "user_not_found" });
       return;

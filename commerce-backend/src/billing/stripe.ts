@@ -64,7 +64,7 @@ export const ensureCustomer = async (userId: string): Promise<string> => {
   if (!stripe) {
     throw new Error("billing_not_configured");
   }
-  const user = store.findUserById(userId);
+  const user = await store.findUserById(userId);
   if (!user) {
     throw new Error("user_not_found");
   }
@@ -76,7 +76,7 @@ export const ensureCustomer = async (userId: string): Promise<string> => {
     name: user.name,
     metadata: { userId: user.id },
   });
-  store.updateUser(user.id, { stripeCustomerId: customer.id });
+  await store.updateUser(user.id, { stripeCustomerId: customer.id });
   return customer.id;
 };
 
@@ -120,12 +120,14 @@ export const createPortalSession = async (userId: string): Promise<string> => {
 };
 
 /** Apply a subscription's state to the owning user. */
-const syncSubscription = (subscription: Stripe.Subscription): void => {
+const syncSubscription = async (
+  subscription: Stripe.Subscription,
+): Promise<void> => {
   const customerId =
     typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer.id;
-  const user = store.findUserByStripeCustomerId(customerId);
+  const user = await store.findUserByStripeCustomerId(customerId);
   if (!user) {
     logger.warn("Received subscription for unknown customer", { customerId });
     return;
@@ -133,7 +135,7 @@ const syncSubscription = (subscription: Stripe.Subscription): void => {
   const priceId = subscription.items.data[0]?.price?.id;
   const plan = planForPriceId(priceId) ?? user.plan;
   const status = mapStripeStatus(subscription.status);
-  store.updateUser(user.id, {
+  await store.updateUser(user.id, {
     plan: status === "canceled" || status === "none" ? "free" : plan,
     subscriptionStatus: status,
     stripeSubscriptionId: subscription.id,
@@ -148,7 +150,10 @@ const syncSubscription = (subscription: Stripe.Subscription): void => {
  * Verify + process a raw Stripe webhook payload.
  * `rawBody` must be the unparsed request body (Buffer/string).
  */
-export const handleWebhook = (rawBody: Buffer, signature: string): void => {
+export const handleWebhook = async (
+  rawBody: Buffer,
+  signature: string,
+): Promise<void> => {
   if (!stripe) {
     throw new Error("billing_not_configured");
   }
@@ -165,14 +170,14 @@ export const handleWebhook = (rawBody: Buffer, signature: string): void => {
     case "customer.subscription.created":
     case "customer.subscription.updated":
     case "customer.subscription.deleted":
-      syncSubscription(event.data.object as Stripe.Subscription);
+      await syncSubscription(event.data.object as Stripe.Subscription);
       break;
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const planMeta = session.metadata?.plan;
       const userId = session.metadata?.userId;
       if (userId && planMeta && isValidPlan(planMeta)) {
-        store.updateUser(userId, {
+        await store.updateUser(userId, {
           plan: planMeta,
           subscriptionStatus: "active",
         });

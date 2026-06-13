@@ -19,13 +19,15 @@ const passwordSchema = z.object({
 });
 
 /** Update profile fields (currently just the display name). */
-accountRouter.patch("/", (req, res) => {
+accountRouter.patch("/", async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid_input" });
     return;
   }
-  const updated = store.updateUser(req.user!.id, { name: parsed.data.name });
+  const updated = await store.updateUser(req.user!.id, {
+    name: parsed.data.name,
+  });
   if (!updated) {
     res.status(404).json({ error: "user_not_found" });
     return;
@@ -41,6 +43,11 @@ accountRouter.post("/password", async (req, res) => {
     return;
   }
   const user = req.user!;
+  if (!user.passwordHash) {
+    // SSO-only account – no password to verify against.
+    res.status(400).json({ error: "no_password_set" });
+    return;
+  }
   const ok = await verifyPassword(
     parsed.data.currentPassword,
     user.passwordHash,
@@ -50,6 +57,6 @@ accountRouter.post("/password", async (req, res) => {
     return;
   }
   const passwordHash = await hashPassword(parsed.data.newPassword);
-  store.updateUser(user.id, { passwordHash });
+  await store.updateUser(user.id, { passwordHash });
   res.json({ ok: true });
 });

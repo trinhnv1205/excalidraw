@@ -33,6 +33,13 @@ npm run dev                 # http://localhost:3015
 | POST   | `/api/billing/checkout` | ✅ | `{ plan }` → `{ url }` Stripe Checkout       |
 | POST   | `/api/billing/portal` | ✅   | `{ url }` Stripe Customer Portal             |
 | POST   | `/api/billing/webhook`| —    | Stripe webhook (raw body, signature-verified)|
+| PATCH  | `/api/account`        | ✅   | Update display name                          |
+| POST   | `/api/account/password` | ✅ | Change password (needs current password)     |
+| GET    | `/api/scenes`         | ✅   | List scenes + `{ quota: { used, max } }`     |
+| POST   | `/api/scenes`         | ✅   | Create scene (402 when over plan quota)      |
+| GET    | `/api/scenes/:id`     | ✅   | Get one scene with its data                  |
+| PUT    | `/api/scenes/:id`     | ✅   | Update scene name/data                       |
+| DELETE | `/api/scenes/:id`     | ✅   | Delete scene                                 |
 | GET    | `/healthz` `/readyz`  | —    | Health checks                                |
 
 Authenticated requests send `Authorization: Bearer <token>`.

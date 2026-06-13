@@ -4,7 +4,13 @@ import { dirname } from "node:path";
 
 import { config } from "../config.js";
 import { logger } from "../logger.js";
-import type { PersistedState, PublicUser, User } from "./types.js";
+import type {
+  PersistedState,
+  PublicUser,
+  Scene,
+  SceneSummary,
+  User,
+} from "./types.js";
 
 /**
  * A tiny file-backed data store with an interface that intentionally mirrors a
@@ -16,7 +22,7 @@ import type { PersistedState, PublicUser, User } from "./types.js";
  * traffic, point DATABASE_URL at Postgres and replace this module.
  */
 
-const emptyState = (): PersistedState => ({ users: [] });
+const emptyState = (): PersistedState => ({ users: [], scenes: [] });
 
 class FileStore {
   private state: PersistedState;
@@ -32,7 +38,7 @@ class FileStore {
       if (existsSync(this.file)) {
         const raw = readFileSync(this.file, "utf8");
         const parsed = JSON.parse(raw) as PersistedState;
-        return { users: parsed.users ?? [] };
+        return { users: parsed.users ?? [], scenes: parsed.scenes ?? [] };
       }
     } catch (error) {
       logger.error("Failed to load data file, starting empty", {
@@ -101,6 +107,69 @@ class FileStore {
   countUsers(): number {
     return this.state.users.length;
   }
+
+  // ---- Scenes ----
+
+  listScenes(userId: string): SceneSummary[] {
+    return this.state.scenes
+      .filter((s) => s.userId === userId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .map(toSceneSummary);
+  }
+
+  countScenes(userId: string): number {
+    return this.state.scenes.reduce(
+      (total, s) => (s.userId === userId ? total + 1 : total),
+      0,
+    );
+  }
+
+  findScene(userId: string, sceneId: string): Scene | undefined {
+    return this.state.scenes.find(
+      (s) => s.id === sceneId && s.userId === userId,
+    );
+  }
+
+  createScene(input: { userId: string; name: string; data: unknown }): Scene {
+    const now = new Date().toISOString();
+    const scene: Scene = {
+      id: randomUUID(),
+      userId: input.userId,
+      name: input.name,
+      data: input.data,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.state.scenes.push(scene);
+    this.persist();
+    return scene;
+  }
+
+  updateScene(
+    userId: string,
+    sceneId: string,
+    patch: Partial<Pick<Scene, "name" | "data">>,
+  ): Scene | undefined {
+    const scene = this.findScene(userId, sceneId);
+    if (!scene) {
+      return undefined;
+    }
+    Object.assign(scene, patch, { updatedAt: new Date().toISOString() });
+    this.persist();
+    return scene;
+  }
+
+  deleteScene(userId: string, sceneId: string): boolean {
+    const index = this.state.scenes.findIndex(
+      (s) => s.id === sceneId && s.userId === userId,
+    );
+    if (index === -1) {
+      return false;
+    }
+    this.state.scenes.splice(index, 1);
+    this.persist();
+    return true;
+  }
 }
 
 export const store = new FileStore(config.storage.dataFile);
@@ -113,4 +182,11 @@ export const toPublicUser = (user: User): PublicUser => ({
   subscriptionStatus: user.subscriptionStatus,
   currentPeriodEnd: user.currentPeriodEnd,
   createdAt: user.createdAt,
+});
+
+export const toSceneSummary = (scene: Scene): SceneSummary => ({
+  id: scene.id,
+  name: scene.name,
+  createdAt: scene.createdAt,
+  updatedAt: scene.updatedAt,
 });

@@ -189,4 +189,83 @@ export const openBillingPortal = async (): Promise<void> => {
   window.location.href = url;
 };
 
+// ---- Account ----
+
+export const updateProfile = async (name: string): Promise<CommerceUser> => {
+  const { user } = await request<{ user: CommerceUser }>("/api/account", {
+    method: "PATCH",
+    body: { name },
+    auth: true,
+  });
+  return user;
+};
+
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> => {
+  await request("/api/account/password", {
+    method: "POST",
+    body: { currentPassword, newPassword },
+    auth: true,
+  });
+};
+
+// ---- Cloud scenes (quota enforced server-side by plan) ----
+
+export interface SceneSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SceneQuota {
+  used: number;
+  /** -1 means unlimited. */
+  max: number;
+}
+
+export const listScenes = async (): Promise<{
+  scenes: SceneSummary[];
+  quota: SceneQuota;
+}> => request("/api/scenes", { auth: true });
+
+export const getScene = async (
+  id: string,
+): Promise<{ scene: SceneSummary & { data: unknown } }> =>
+  request(`/api/scenes/${id}`, { auth: true });
+
+/**
+ * Persist a new cloud scene. Throws `CommerceError` with code
+ * `scene_quota_exceeded` (status 402) when the plan limit is reached.
+ */
+export const createScene = async (
+  name: string,
+  data: unknown,
+): Promise<SceneSummary> => {
+  const res = await request<{ scene: SceneSummary }>("/api/scenes", {
+    method: "POST",
+    body: { name, data },
+    auth: true,
+  });
+  return res.scene;
+};
+
+export const updateScene = async (
+  id: string,
+  patch: { name?: string; data?: unknown },
+): Promise<SceneSummary> => {
+  const res = await request<{ scene: SceneSummary }>(`/api/scenes/${id}`, {
+    method: "PUT",
+    body: patch,
+    auth: true,
+  });
+  return res.scene;
+};
+
+export const deleteScene = async (id: string): Promise<void> => {
+  await request(`/api/scenes/${id}`, { method: "DELETE", auth: true });
+};
+
 export { CommerceError, FREE_ENTITLEMENTS };

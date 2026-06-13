@@ -35,12 +35,12 @@ authRouter.post("/register", authLimiter, async (req, res) => {
     return;
   }
   const { email, password, name } = parsed.data;
-  if (store.findUserByEmail(email)) {
+  if (await store.findUserByEmail(email)) {
     res.status(409).json({ error: "email_taken" });
     return;
   }
   const passwordHash = await hashPassword(password);
-  const user = store.createUser({
+  const user = await store.createUser({
     email,
     passwordHash,
     name: name ?? email.split("@")[0],
@@ -56,9 +56,13 @@ authRouter.post("/login", authLimiter, async (req, res) => {
     return;
   }
   const { email, password } = parsed.data;
-  const user = store.findUserByEmail(email);
+  const user = await store.findUserByEmail(email);
   // Constant-ish response to avoid user enumeration.
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  if (
+    !user ||
+    !user.passwordHash ||
+    !(await verifyPassword(password, user.passwordHash))
+  ) {
     res.status(401).json({ error: "invalid_credentials" });
     return;
   }

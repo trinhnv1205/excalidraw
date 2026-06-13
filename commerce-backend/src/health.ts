@@ -11,9 +11,9 @@ healthRouter.get("/healthz", (_req, res) => {
 });
 
 /** Readiness: dependencies reachable / store loadable. */
-healthRouter.get("/readyz", (_req, res) => {
+healthRouter.get("/readyz", async (_req, res) => {
   try {
-    const users = store.countUsers();
+    const users = await store.countUsers();
     res.json({
       status: "ready",
       users,

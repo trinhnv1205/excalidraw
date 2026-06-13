@@ -63,14 +63,14 @@ billingRouter.post("/portal", requireAuth, async (req, res) => {
 billingRouter.post(
   "/webhook",
   raw({ type: "application/json" }),
-  (req, res) => {
+  async (req, res) => {
     const signature = req.headers["stripe-signature"];
     if (typeof signature !== "string") {
       res.status(400).json({ error: "missing_signature" });
       return;
     }
     try {
-      handleWebhook(req.body as Buffer, signature);
+      await handleWebhook(req.body as Buffer, signature);
       res.json({ received: true });
     } catch (error) {
       logger.error("webhook error", { error: (error as Error).message });

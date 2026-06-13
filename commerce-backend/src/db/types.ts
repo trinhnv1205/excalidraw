@@ -10,8 +10,8 @@ export type SubscriptionStatus =
 export interface User {
   id: string;
   email: string;
-  /** bcrypt hash – never returned to clients. */
-  passwordHash: string;
+  /** bcrypt hash – never returned to clients. Absent for SSO-only accounts. */
+  passwordHash?: string;
   name: string;
   createdAt: string;
   updatedAt: string;
@@ -23,7 +23,13 @@ export interface User {
   stripeSubscriptionId?: string;
   /** ISO timestamp the current paid period ends (if any). */
   currentPeriodEnd?: string;
+
+  // OAuth identity links (set when the account was created/linked via SSO).
+  googleId?: string;
+  githubId?: string;
 }
+
+export type OAuthProvider = "google" | "github";
 
 /** Shape that is safe to return to API clients. */
 export interface PublicUser {

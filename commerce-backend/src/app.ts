@@ -6,6 +6,7 @@ import helmet from "helmet";
 import { config } from "./config.js";
 import { logger } from "./logger.js";
 import { authRouter } from "./routes/auth.js";
+import { oauthRouter } from "./routes/oauth.js";
 import { meRouter } from "./routes/me.js";
 import { accountRouter } from "./routes/account.js";
 import { scenesRouter } from "./routes/scenes.js";
@@ -62,6 +63,7 @@ export const createApp = (): Express => {
     }),
   );
 
+  app.use("/api/auth/oauth", oauthRouter);
   app.use("/api/auth", authRouter);
   app.use("/api/me", meRouter);
   app.use("/api/account", accountRouter);

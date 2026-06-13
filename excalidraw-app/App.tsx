@@ -130,6 +130,7 @@ import {
   localStorageQuotaExceededAtom,
 } from "./data/LocalData";
 import { isBrowserStorageStateNewer } from "./data/tabSync";
+import { registerExcalidrawAPI } from "./data/commerceScene";
 import { ShareDialog, shareDialogStateAtom } from "./share/ShareDialog";
 import CollabError, { collabErrorIndicatorAtom } from "./collab/CollabError";
 import { useHandleAppTheme } from "./useHandleAppTheme";
@@ -433,6 +434,13 @@ const ExcalidrawWrapper = () => {
       }
       forceRefresh((prev) => !prev);
     }
+  }, [excalidrawAPI]);
+
+  // Expose the imperative API to the commerce "cloud scenes" bridge so the
+  // account widget can save/load the live drawing.
+  useEffect(() => {
+    registerExcalidrawAPI(excalidrawAPI ?? null);
+    return () => registerExcalidrawAPI(null);
   }, [excalidrawAPI]);
 
   // ---------------------------------------------------------------------------

@@ -63,6 +63,11 @@ export const config = {
   storage: {
     /** Path to the JSON-file backed store (durable on a mounted volume). */
     dataFile: process.env.DATA_FILE ?? "./data/store.json",
+    /**
+     * Postgres connection string. When set, the Postgres store is used instead
+     * of the file store, e.g. "postgres://user:pass@host:5432/db".
+     */
+    databaseUrl: process.env.DATABASE_URL ?? "",
   },
 
   billing: {
@@ -80,6 +85,22 @@ export const config = {
       process.env.BILLING_CANCEL_URL ?? "http://localhost:3000/?billing=cancel",
     portalReturnUrl:
       process.env.BILLING_PORTAL_RETURN_URL ?? "http://localhost:3000/",
+  },
+
+  oauth: {
+    /** Public base URL of THIS backend, used to build OAuth callback URLs. */
+    publicBaseUrl:
+      process.env.PUBLIC_BASE_URL ?? `http://localhost:${int(process.env.PORT, 3015)}`,
+    /** Where the browser is sent after a successful login (token in URL hash). */
+    frontendUrl: process.env.OAUTH_FRONTEND_URL ?? "http://localhost:3000",
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    },
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID ?? "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+    },
   },
 
   rateLimit: {

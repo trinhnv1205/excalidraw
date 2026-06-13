@@ -5,10 +5,13 @@ Excalidraw is **MIT licensed**, so you are already free to use, modify, sell, an
 | Capability | Where |
 | --- | --- |
 | Accounts / auth | `commerce-backend/` (JWT, bcrypt) |
+| OAuth / SSO | Google + GitHub (`commerce-backend/src/routes/oauth.ts`) |
 | Subscriptions | `commerce-backend/` (Stripe Checkout + Portal) |
 | Plan-based gating | `commerce-backend/src/billing/plans.ts` |
+| Cloud drawings + quota | `commerce-backend/src/routes/scenes.ts` (Free=3, Pro/Team=∞) |
+| Storage | JSON file or Postgres (`DATABASE_URL`) |
 | Frontend integration | `excalidraw-app/data/commerce.ts` |
-| Account & upgrade UI | `excalidraw-app/components/CommerceAccount.tsx` |
+| Account, pricing & cloud UI | `excalidraw-app/components/CommerceAccount.tsx` |
 | White-label branding | `excalidraw-app/data/branding.ts` + `VITE_APP_BRAND_*` |
 | Production deploy | `docker-compose.prod.yml`, `deploy/Caddyfile`, `DEPLOY.md` |
 
@@ -69,8 +72,6 @@ yarn build:app
 
 ## Roadmap ideas (not yet implemented)
 
-- OAuth / SSO (Google, GitHub) login.
-- Postgres storage adapter + migrations.
 - Team seat management UI and per-org workspaces.
 - Usage metering for AI features.
 - Admin dashboard.

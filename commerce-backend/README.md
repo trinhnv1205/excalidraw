@@ -27,6 +27,9 @@ npm run dev                 # http://localhost:3015
 |--------|-----------------------|------|----------------------------------------------|
 | POST   | `/api/auth/register`  | —    | Create account, returns `{ token, user }`    |
 | POST   | `/api/auth/login`     | —    | Login, returns `{ token, user }`             |
+| GET    | `/api/auth/oauth`     | —    | `{ google, github }` which SSO is enabled    |
+| GET    | `/api/auth/oauth/:provider/start` | — | Begin Google/GitHub OAuth             |
+| GET    | `/api/auth/oauth/:provider/callback` | — | OAuth redirect target (issues JWT) |
 | GET    | `/api/me`             | ✅   | Current user + resolved `entitlements`       |
 | GET    | `/api/me/plans`       | —    | Public plan catalogue (for a pricing page)   |
 | GET    | `/api/billing/status` | —    | `{ configured: boolean }`                    |
@@ -43,6 +46,22 @@ npm run dev                 # http://localhost:3015
 | GET    | `/healthz` `/readyz`  | —    | Health checks                                |
 
 Authenticated requests send `Authorization: Bearer <token>`.
+
+## Storage
+
+Defaults to a JSON file (`DATA_FILE`). Set `DATABASE_URL` to use Postgres
+instead — the schema is created automatically on startup. Both implement the
+same `DataStore` interface in [`src/db/store.ts`](src/db/store.ts).
+
+## OAuth / SSO
+
+Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and/or
+`GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET`, plus `PUBLIC_BASE_URL` (this backend)
+and `OAUTH_FRONTEND_URL` (your SPA). Register the callback
+`$PUBLIC_BASE_URL/api/auth/oauth/<provider>/callback` with each provider. The
+backend redirects to `OAUTH_FRONTEND_URL/#token=<jwt>` on success; the SPA
+captures it via `captureOAuthToken()`. Providers left unconfigured are simply
+hidden.
 
 ## Plans & entitlements
 

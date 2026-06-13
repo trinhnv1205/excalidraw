@@ -8,6 +8,7 @@ Excalidraw is **MIT licensed**, so you are already free to use, modify, sell, an
 | Subscriptions | `commerce-backend/` (Stripe Checkout + Portal) |
 | Plan-based gating | `commerce-backend/src/billing/plans.ts` |
 | Frontend integration | `excalidraw-app/data/commerce.ts` |
+| Account & upgrade UI | `excalidraw-app/components/CommerceAccount.tsx` |
 | White-label branding | `excalidraw-app/data/branding.ts` + `VITE_APP_BRAND_*` |
 | Production deploy | `docker-compose.prod.yml`, `deploy/Caddyfile`, `DEPLOY.md` |
 

@@ -5,6 +5,7 @@ import { registerSW } from "virtual:pwa-register";
 import "../excalidraw-app/sentry";
 
 import ExcalidrawApp from "./App";
+import { CommerceAccount } from "./components/CommerceAccount";
 import { applyBranding } from "./data/branding";
 
 window.__EXCALIDRAW_SHA__ = import.meta.env.VITE_APP_GIT_SHA;
@@ -18,5 +19,6 @@ registerSW();
 root.render(
   <StrictMode>
     <ExcalidrawApp />
+    <CommerceAccount />
   </StrictMode>,
 );

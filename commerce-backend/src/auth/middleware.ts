@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 
-import { store } from "../db/store.js";
+import { isAdmin, store } from "../db/store.js";
 import type { User } from "../db/types.js";
 import { resolveEntitlements } from "../billing/plans.js";
 import { verifyAccessToken } from "./jwt.js";
@@ -45,6 +45,19 @@ export const requireAuth = async (
   } catch {
     res.status(401).json({ error: "invalid_token" });
   }
+};
+
+/** Require the authenticated user to be an admin. Use after `requireAuth`. */
+export const requireAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  if (!req.user || !isAdmin(req.user)) {
+    res.status(403).json({ error: "forbidden" });
+    return;
+  }
+  next();
 };
 
 /**

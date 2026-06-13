@@ -12,6 +12,7 @@ Excalidraw is **MIT licensed**, so you are already free to use, modify, sell, an
 | Storage | JSON file or Postgres (`DATABASE_URL`) |
 | Frontend integration | `excalidraw-app/data/commerce.ts` |
 | Account, pricing & cloud UI | `excalidraw-app/components/CommerceAccount.tsx` |
+| Admin dashboard & metrics | `commerce-backend/src/routes/admin.ts` (`ADMIN_EMAILS`) |
 | White-label branding | `excalidraw-app/data/branding.ts` + `VITE_APP_BRAND_*` |
 | Production deploy | `docker-compose.prod.yml`, `deploy/Caddyfile`, `DEPLOY.md` |
 
@@ -74,4 +75,4 @@ yarn build:app
 
 - Team seat management UI and per-org workspaces.
 - Usage metering for AI features.
-- Admin dashboard.
+- Email verification + password reset.

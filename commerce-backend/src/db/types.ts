@@ -27,9 +27,14 @@ export interface User {
   // OAuth identity links (set when the account was created/linked via SSO).
   googleId?: string;
   githubId?: string;
+
+  /** Access role. Defaults to "user". */
+  role?: UserRole;
 }
 
 export type OAuthProvider = "google" | "github";
+
+export type UserRole = "user" | "admin";
 
 /** Shape that is safe to return to API clients. */
 export interface PublicUser {
@@ -40,6 +45,7 @@ export interface PublicUser {
   subscriptionStatus: SubscriptionStatus;
   currentPeriodEnd?: string;
   createdAt: string;
+  role: UserRole;
 }
 
 /** A cloud-saved drawing owned by a user. */

@@ -43,7 +43,11 @@ npm run dev                 # http://localhost:3015
 | GET    | `/api/scenes/:id`     | ✅   | Get one scene with its data                  |
 | PUT    | `/api/scenes/:id`     | ✅   | Update scene name/data                       |
 | DELETE | `/api/scenes/:id`     | ✅   | Delete scene                                 |
+| GET    | `/api/admin/metrics`  | 🛡️   | Admin: totals, plan split, MRR estimate      |
+| GET    | `/api/admin/users`    | 🛡️   | Admin: paginated user list                   |
 | GET    | `/healthz` `/readyz`  | —    | Health checks                                |
+
+🛡️ = requires the admin role (see `ADMIN_EMAILS`).
 
 Authenticated requests send `Authorization: Bearer <token>`.
 

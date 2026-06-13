@@ -103,6 +103,11 @@ export const config = {
     },
   },
 
+  admin: {
+    /** Comma-separated allow-list of emails granted the admin role. */
+    emails: list(process.env.ADMIN_EMAILS, []).map((e) => e.toLowerCase()),
+  },
+
   rateLimit: {
     windowMs: int(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
     max: int(process.env.RATE_LIMIT_MAX, 300),

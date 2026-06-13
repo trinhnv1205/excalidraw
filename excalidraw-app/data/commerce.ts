@@ -29,6 +29,7 @@ export interface CommerceUser {
   subscriptionStatus: string;
   currentPeriodEnd?: string;
   createdAt: string;
+  role: "user" | "admin";
 }
 
 const TOKEN_KEY = "excalidraw-commerce-token";
@@ -322,5 +323,19 @@ export const getOAuthProviders = async (): Promise<{
     return { google: false, github: false };
   }
 };
+
+// ---- Admin ----
+
+export interface AdminMetrics {
+  totalUsers: number;
+  planDistribution: { free: number; pro: number; team: number };
+  activeSubscriptions: number;
+  totalScenes: number;
+  mrrUsd: number;
+  currency: string;
+}
+
+export const getAdminMetrics = async (): Promise<AdminMetrics> =>
+  request<AdminMetrics>("/api/admin/metrics", { auth: true });
 
 export { CommerceError, FREE_ENTITLEMENTS };

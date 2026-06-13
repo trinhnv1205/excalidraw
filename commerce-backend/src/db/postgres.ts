@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 
 import { logger } from "../logger.js";
+import type { PlanId } from "../billing/plans.js";
 import type { DataStore } from "./store.js";
 import { toSceneSummary } from "./store.js";
 import type {
@@ -45,7 +46,8 @@ export class PostgresStore implements DataStore {
         stripe_subscription_id TEXT,
         current_period_end TIMESTAMPTZ,
         google_id TEXT,
-        github_id TEXT
+        github_id TEXT,
+        role TEXT NOT NULL DEFAULT 'user'
       );
       CREATE TABLE IF NOT EXISTS scenes (
         id TEXT PRIMARY KEY,
@@ -82,6 +84,7 @@ export class PostgresStore implements DataStore {
         : undefined,
       googleId: (row.google_id as string | null) ?? undefined,
       githubId: (row.github_id as string | null) ?? undefined,
+      role: (row.role as User["role"]) ?? "user",
     };
   }
 
@@ -189,6 +192,35 @@ export class PostgresStore implements DataStore {
   async countUsers(): Promise<number> {
     const { rows } = await this.pool.query(
       `SELECT COUNT(*)::int AS count FROM users`,
+    );
+    return rows[0].count as number;
+  }
+
+  async listUsers(limit: number, offset: number): Promise<User[]> {
+    const { rows } = await this.pool.query(
+      `SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+    return rows.map((row) => PostgresStore.rowToUser(row));
+  }
+
+  async countUsersByPlan(): Promise<Record<PlanId, number>> {
+    const { rows } = await this.pool.query(
+      `SELECT plan, COUNT(*)::int AS count FROM users GROUP BY plan`,
+    );
+    const counts: Record<PlanId, number> = { free: 0, pro: 0, team: 0 };
+    for (const row of rows) {
+      const plan = row.plan as PlanId;
+      if (plan in counts) {
+        counts[plan] = row.count as number;
+      }
+    }
+    return counts;
+  }
+
+  async countAllScenes(): Promise<number> {
+    const { rows } = await this.pool.query(
+      `SELECT COUNT(*)::int AS count FROM scenes`,
     );
     return rows[0].count as number;
   }

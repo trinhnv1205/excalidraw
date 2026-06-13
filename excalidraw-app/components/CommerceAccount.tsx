@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
+  type AdminMetrics,
   CommerceError,
   type CommerceUser,
   type Entitlements,
@@ -9,6 +10,7 @@ import {
   type SceneSummary,
   createScene,
   deleteScene,
+  getAdminMetrics,
   getMe,
   getOAuthProviders,
   getPlans,
@@ -31,7 +33,7 @@ import {
 import "./CommerceAccount.scss";
 
 type Mode = "login" | "register";
-type View = "main" | "plans";
+type View = "main" | "plans" | "admin";
 
 const ENTITLEMENT_LABELS: { key: keyof Entitlements; label: string }[] = [
   { key: "collaboration", label: "Live collaboration" },
@@ -78,6 +80,7 @@ export const CommerceAccount: React.FC = () => {
   const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [scenes, setScenes] = useState<SceneSummary[]>([]);
   const [quota, setQuota] = useState<SceneQuota | null>(null);
+  const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
 
   const refresh = useCallback(async () => {
     const me = await getMe();
@@ -111,6 +114,16 @@ export const CommerceAccount: React.FC = () => {
     }
     setView("plans");
   }, [plans.length]);
+
+  const loadMetrics = useCallback(async () => {
+    setError(null);
+    try {
+      setMetrics(await getAdminMetrics());
+      setView("admin");
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }, []);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -255,6 +268,46 @@ export const CommerceAccount: React.FC = () => {
     </>
   );
 
+  const renderAdmin = () => (
+    <>
+      <h2 className="commerce-account__title">Admin dashboard</h2>
+      {metrics && (
+        <>
+          <div className="commerce-account__plan-row">
+            <span>Total users</span>
+            <span>{metrics.totalUsers}</span>
+          </div>
+          <div className="commerce-account__plan-row">
+            <span>Active subscriptions</span>
+            <span>{metrics.activeSubscriptions}</span>
+          </div>
+          <div className="commerce-account__plan-row">
+            <span>Estimated MRR</span>
+            <span>
+              {metrics.currency} {metrics.mrrUsd}
+            </span>
+          </div>
+          <div className="commerce-account__plan-row">
+            <span>Plans (free / pro / team)</span>
+            <span>
+              {metrics.planDistribution.free} / {metrics.planDistribution.pro} /{" "}
+              {metrics.planDistribution.team}
+            </span>
+          </div>
+          <div className="commerce-account__plan-row">
+            <span>Cloud drawings</span>
+            <span>{metrics.totalScenes}</span>
+          </div>
+        </>
+      )}
+      <div className="commerce-account__switch">
+        <button type="button" onClick={() => setView("main")}>
+          ← Back
+        </button>
+      </div>
+    </>
+  );
+
   const renderCloud = () => (
     <>
       <div className="commerce-account__plan-row">
@@ -330,6 +383,8 @@ export const CommerceAccount: React.FC = () => {
 
             {view === "plans" ? (
               renderPlans()
+            ) : view === "admin" ? (
+              renderAdmin()
             ) : user ? (
               <>
                 <h2 className="commerce-account__title">Your account</h2>
@@ -364,6 +419,17 @@ export const CommerceAccount: React.FC = () => {
                     onClick={handlePortal}
                   >
                     Manage billing
+                  </button>
+                )}
+
+                {user.role === "admin" && (
+                  <button
+                    type="button"
+                    className="commerce-account__btn commerce-account__btn--ghost commerce-account__btn--plan"
+                    disabled={busy}
+                    onClick={loadMetrics}
+                  >
+                    Admin dashboard
                   </button>
                 )}
 

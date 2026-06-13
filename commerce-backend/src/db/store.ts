@@ -4,6 +4,7 @@ import { dirname } from "node:path";
 
 import { config } from "../config.js";
 import { logger } from "../logger.js";
+import type { PlanId } from "../billing/plans.js";
 import type {
   OAuthProvider,
   PersistedState,
@@ -41,6 +42,9 @@ export interface DataStore {
   }): Promise<User>;
   updateUser(id: string, patch: Partial<User>): Promise<User | undefined>;
   countUsers(): Promise<number>;
+  listUsers(limit: number, offset: number): Promise<User[]>;
+  countUsersByPlan(): Promise<Record<PlanId, number>>;
+  countAllScenes(): Promise<number>;
 
   listScenes(userId: string): Promise<SceneSummary[]>;
   countScenes(userId: string): Promise<number>;
@@ -147,6 +151,7 @@ class FileStore implements DataStore {
       subscriptionStatus: "none",
       googleId: input.googleId,
       githubId: input.githubId,
+      role: "user",
     };
     this.state.users.push(user);
     this.persist();
@@ -168,6 +173,24 @@ class FileStore implements DataStore {
 
   async countUsers(): Promise<number> {
     return this.state.users.length;
+  }
+
+  async listUsers(limit: number, offset: number): Promise<User[]> {
+    return [...this.state.users]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(offset, offset + limit);
+  }
+
+  async countUsersByPlan(): Promise<Record<PlanId, number>> {
+    const counts: Record<PlanId, number> = { free: 0, pro: 0, team: 0 };
+    for (const user of this.state.users) {
+      counts[user.plan] = (counts[user.plan] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  async countAllScenes(): Promise<number> {
+    return this.state.scenes.length;
   }
 
   async listScenes(userId: string): Promise<SceneSummary[]> {
@@ -245,6 +268,14 @@ class FileStore implements DataStore {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Effective admin check: a user is admin if their stored role is "admin" OR
+ * their email is in the ADMIN_EMAILS allow-list (the bootstrap mechanism).
+ */
+export const isAdmin = (user: User): boolean =>
+  user.role === "admin" ||
+  config.admin.emails.includes(user.email.toLowerCase());
+
 export const toPublicUser = (user: User): PublicUser => ({
   id: user.id,
   email: user.email,
@@ -253,6 +284,7 @@ export const toPublicUser = (user: User): PublicUser => ({
   subscriptionStatus: user.subscriptionStatus,
   currentPeriodEnd: user.currentPeriodEnd,
   createdAt: user.createdAt,
+  role: isAdmin(user) ? "admin" : "user",
 });
 
 export const toSceneSummary = (scene: Scene): SceneSummary => ({

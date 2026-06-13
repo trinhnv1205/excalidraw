@@ -9,6 +9,7 @@ import { authRouter } from "./routes/auth.js";
 import { oauthRouter } from "./routes/oauth.js";
 import { meRouter } from "./routes/me.js";
 import { accountRouter } from "./routes/account.js";
+import { adminRouter } from "./routes/admin.js";
 import { scenesRouter } from "./routes/scenes.js";
 import { billingRouter } from "./routes/billing.js";
 import { healthRouter } from "./health.js";
@@ -68,6 +69,7 @@ export const createApp = (): Express => {
   app.use("/api/me", meRouter);
   app.use("/api/account", accountRouter);
   app.use("/api/scenes", scenesRouter);
+  app.use("/api/admin", adminRouter);
 
   app.get("/api", (_req, res) => {
     res.json({ name: "excalidraw-commerce-backend", version: "1.0.0" });

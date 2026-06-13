@@ -83,6 +83,13 @@ export const PLANS: Record<PlanId, Plan> = {
   },
 };
 
+/** Indicative monthly price (USD) per plan – used for MRR estimation only. */
+export const MONTHLY_PRICE_USD: Record<PlanId, number> = {
+  free: 0,
+  pro: 8,
+  team: 20,
+};
+
 const PAID_STATUSES = new Set(["active", "trialing"]);
 
 /**

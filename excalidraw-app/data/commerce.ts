@@ -169,7 +169,9 @@ export const hasFeature = async (
 };
 
 /** Redirect the browser to Stripe Checkout for the chosen plan. */
-export const startCheckout = async (plan: Exclude<PlanId, "free">): Promise<void> => {
+export const startCheckout = async (
+  plan: Exclude<PlanId, "free">,
+): Promise<void> => {
   const { url } = await request<{ url: string }>("/api/billing/checkout", {
     method: "POST",
     body: { plan },

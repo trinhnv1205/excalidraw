@@ -1,8 +1,6 @@
 # Deploying Excalidraw (self-hosted, commercial-ready)
 
-This guide covers a production deployment of the full stack — the Excalidraw
-frontend, the commerce backend (auth + subscriptions), and a TLS-terminating
-reverse proxy — using Docker Compose.
+This guide covers a production deployment of the full stack — the Excalidraw frontend, the commerce backend (auth + subscriptions), and a TLS-terminating reverse proxy — using Docker Compose.
 
 ## Architecture
 
@@ -43,8 +41,7 @@ cp .env.prod.example .env.prod
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 ```
 
-Caddy obtains a certificate for `DOMAIN` automatically. The site is live at
-`https://app.example.com`.
+Caddy obtains a certificate for `DOMAIN` automatically. The site is live at `https://app.example.com`.
 
 ## 3. Verify
 
@@ -59,24 +56,18 @@ Leave `DOMAIN=:80` in `.env.prod` and browse to `http://localhost`.
 
 ## Stripe webhooks
 
-Point a Stripe webhook at `https://app.example.com/api/billing/webhook`,
-subscribe to `customer.subscription.*` and `checkout.session.completed`, and put
-the signing secret in `STRIPE_WEBHOOK_SECRET`. See
-[`commerce-backend/README.md`](commerce-backend/README.md).
+Point a Stripe webhook at `https://app.example.com/api/billing/webhook`, subscribe to `customer.subscription.*` and `checkout.session.completed`, and put the signing secret in `STRIPE_WEBHOOK_SECRET`. See [`commerce-backend/README.md`](commerce-backend/README.md).
 
 ## Data & backups
 
-User accounts and subscription state live in the `commerce_data` Docker volume
-(`/app/data/store.json`). Back it up regularly:
+User accounts and subscription state live in the `commerce_data` Docker volume (`/app/data/store.json`). Back it up regularly:
 
 ```bash
 docker run --rm -v excalidraw_commerce_data:/data -v "$PWD":/backup alpine \
   tar czf /backup/commerce-backup-$(date +%F).tgz -C /data .
 ```
 
-For higher scale, swap the JSON store for Postgres by reimplementing the
-repository in `commerce-backend/src/db/store.ts` (the interface is small and
-already isolated from the route handlers).
+For higher scale, swap the JSON store for Postgres by reimplementing the repository in `commerce-backend/src/db/store.ts` (the interface is small and already isolated from the route handlers).
 
 ## Updating
 
@@ -87,8 +78,5 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
 
 ## Other targets
 
-- **Frontend only on Vercel** — `vercel.json` is preconfigured; deploy the
-  static SPA and host the commerce backend separately (set
-  `VITE_APP_COMMERCE_API_URL` to its URL).
-- **Single-container frontend** — the root `Dockerfile` builds just the SPA;
-  use it if you don't need the commercial backend.
+- **Frontend only on Vercel** — `vercel.json` is preconfigured; deploy the static SPA and host the commerce backend separately (set `VITE_APP_COMMERCE_API_URL` to its URL).
+- **Single-container frontend** — the root `Dockerfile` builds just the SPA; use it if you don't need the commercial backend.

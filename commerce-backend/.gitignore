@@ -1,0 +1,10 @@
+node_modules
+dist
+data
+.env
+.env.local
+*.log
+
+# This standalone service uses npm; re-include its lockfile (the monorepo
+# root .gitignore excludes package-lock.json globally for the yarn workspace).
+!package-lock.json

@@ -1,0 +1,27 @@
+# Reverse proxy for the full Excalidraw commercial stack.
+#
+# Set DOMAIN in your environment (e.g. app.example.com) and Caddy will obtain
+# and renew TLS certificates automatically. For local testing leave it as
+# ":80" (the default below) to serve plain HTTP.
+
+{$DOMAIN::80} {
+	encode gzip zstd
+
+	# Commerce API + health checks -> backend service.
+	@api path /api/* /healthz /readyz
+	handle @api {
+		reverse_proxy commerce-backend:3015
+	}
+
+	# Everything else -> the static Excalidraw frontend (nginx).
+	handle {
+		reverse_proxy excalidraw:80
+	}
+
+	# Basic security headers (the SPA sets its own where needed).
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
